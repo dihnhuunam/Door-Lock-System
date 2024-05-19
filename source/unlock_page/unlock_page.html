@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unlock Page</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Unlock Page</h2>
+        <input type="password" id="password" name="password" readonly> <!-- Thay đổi type thành "password" -->
+        <div class="keypad">
+            <div class="key" onclick="addDigit('1')">1</div>
+            <div class="key" onclick="addDigit('2')">2</div>
+            <div class="key" onclick="addDigit('3')">3</div>
+            <div class="key" onclick="addDigit('4')">4</div>
+            <div class="key" onclick="addDigit('5')">5</div>
+            <div class="key" onclick="addDigit('6')">6</div>
+            <div class="key" onclick="addDigit('7')">7</div>
+            <div class="key" onclick="addDigit('8')">8</div>
+            <div class="key" onclick="addDigit('9')">9</div>
+            <div class="key" onclick="addDigit('0')">0</div>
+            <div class="key" onclick="clearPassword()">C</div>
+            <div class="key" onclick="deleteLastDigit()">Delete</div>
+        </div>
+        <input type="submit" value="Unlock" onclick="submitPassword()">
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        var passwordField = document.getElementById("password");
+
+        function addDigit(digit) {
+            passwordField.value += digit;
+        }
+
+        function clearPassword() {
+            passwordField.value = "";
+        }
+
+        function deleteLastDigit() {
+            var password = passwordField.value;
+            passwordField.value = password.slice(0, -1);
+        }
+
+        function submitPassword() {
+            var password = passwordField.value;
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/unlock", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState == 4 && xhr.status == 200) {
+                    var response = xhr.responseText;
+                    if (response == "success") {
+                        document.getElementById("message").innerText = "Door unlocked successfully!";
+                    } else {
+                        document.getElementById("message").innerText = "Failed to unlock door. Please try again.";
+                    }
+                }
+            };
+            xhr.send("password=" + password);
+        }
+    </script>
+</body>
+</html>
