@@ -14,7 +14,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD I2C address
 
 void setup() 
 {
-  Serial.begin(9600); // Initiate a serial communication
+  Serial.begin(115200); // Initiate a serial communication
   SPI.begin(); // Initiate SPI bus
   mfrc522.PCD_Init(); // Initiate MFRC522
   Serial.println("Approximate your card to the reader...");
@@ -27,10 +27,25 @@ void setup()
   lcd.backlight(); // Turn on the backlight
   lcd.setCursor(0, 0);
   lcd.print("Scan your card");
+
+  // Delay to ensure ESP32 is ready
+  delay(5000);
 }
 
 void loop() 
 {
+  // Check for incoming commands from ESP32
+  if (Serial.available()) {
+    String command = Serial.readStringUntil('\n');
+    command.trim();
+
+    if (command == "UNLOCK") {
+      unlockDoor();
+    } else if (command == "CHECK_CONNECTION") {
+      Serial.println("CONNECTION_OK");
+    }
+  }
+
   // Look for new cards
   if (!mfrc522.PICC_IsNewCardPresent()) 
   {
@@ -98,4 +113,25 @@ void loop()
     lcd.print("Access Denied");
     delay(1000);
   }
+}
+
+void unlockDoor() {
+  Serial.println("Authorized access");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Access Granted");
+  lcd.setCursor(0, 1);
+  lcd.print("Remote Unlock");
+
+  digitalWrite(8, HIGH);
+  for (pos = 0; pos <= 180; pos += 1) {
+    myservo.write(pos);
+    delay(5);
+  }
+  delay(1000);
+  for (pos = 180; pos >= 0; pos -= 1) {
+    myservo.write(pos);
+    delay(5);
+  }
+  digitalWrite(8, LOW);
 }
