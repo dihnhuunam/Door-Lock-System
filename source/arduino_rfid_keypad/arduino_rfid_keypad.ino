@@ -3,6 +3,7 @@
 #include <Servo.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <SoftwareSerial.h>
 
 #define SS_PIN 10
 #define RST_PIN 9
@@ -12,8 +13,14 @@ int pos = 0;
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD I2C address
 
-void setup() 
-{
+// Define SoftwareSerial pins for Arduino Uno
+#define RX_PIN 2
+#define TX_PIN 3
+
+// SoftwareSerial object for Arduino Uno communication with ESP32
+SoftwareSerial arduinoSerial(RX_PIN, TX_PIN);
+
+void setup() {
   Serial.begin(115200); // Initiate a serial communication
   SPI.begin(); // Initiate SPI bus
   mfrc522.PCD_Init(); // Initiate MFRC522
@@ -28,33 +35,31 @@ void setup()
   lcd.setCursor(0, 0);
   lcd.print("Scan your card");
 
-  // Delay to ensure ESP32 is ready
-  delay(5000);
+  // Initialize SoftwareSerial
+  arduinoSerial.begin(9600); // Set baud rate for SoftwareSerial
+  delay(1000); // Allow time for initialization
 }
 
-void loop() 
-{
+void loop() {
   // Check for incoming commands from ESP32
-  if (Serial.available()) {
-    String command = Serial.readStringUntil('\n');
+  if (arduinoSerial.available()) {
+    String command = arduinoSerial.readStringUntil('\n');
     command.trim();
 
     if (command == "UNLOCK") {
       unlockDoor();
     } else if (command == "CHECK_CONNECTION") {
-      Serial.println("CONNECTION_OK");
+      arduinoSerial.println("CONNECTED SUCCESSFULY");
     }
   }
 
   // Look for new cards
-  if (!mfrc522.PICC_IsNewCardPresent()) 
-  {
+  if (!mfrc522.PICC_IsNewCardPresent()) {
     return;
   }
 
   // Select one of the cards
-  if (!mfrc522.PICC_ReadCardSerial()) 
-  {
+  if (!mfrc522.PICC_ReadCardSerial()) {
     return;
   }
 
@@ -66,8 +71,7 @@ void loop()
   
   String content = "";
   byte letter;
-  for (byte i = 0; i < mfrc522.uid.size; i++) 
-  {
+  for (byte i = 0; i < mfrc522.uid.size; i++) {
     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
     Serial.print(mfrc522.uid.uidByte[i], HEX);
     content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
@@ -84,7 +88,7 @@ void loop()
   Serial.print("UID: ");
   Serial.println(content.substring(1));
 
-  if (content.substring(1) == "A3 DB EB 0D" || content.substring(1) == "89 2C 18 16" || content.substring(1) == "05 7B D7 03") //change here the UID of the card/cards that you want to give access
+  if (content.substring(1) == "A3 DB EB 0D" || content.substring(1) == "89 2C 18 16" || content.substring(1) == "05 7B D7 03") // Change here the UID of the card/cards that you want to give access
   {
     Serial.println("Authorized access");
     lcd.clear();
