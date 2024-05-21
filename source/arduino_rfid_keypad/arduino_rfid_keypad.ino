@@ -84,7 +84,7 @@ void loop()
   Serial.print("UID: ");
   Serial.println(content.substring(1));
 
-  if (content.substring(1) == "A3 DB EB 0D" || content.substring(1) == "7E 32 30 00" || content.substring(1) == "44 7E 37 FE" || content.substring(1) == "95 79 1C 53" || content.substring(1) == "F5 BC 0C 53" || content.substring(1) == "F7 73 A1 D5") //change here the UID of the card/cards that you want to give access
+  if (content.substring(1) == "A3 DB EB 0D" || content.substring(1) == "89 2C 18 16" || content.substring(1) == "05 7B D7 03") //change here the UID of the card/cards that you want to give access
   {
     Serial.println("Authorized access");
     lcd.clear();
