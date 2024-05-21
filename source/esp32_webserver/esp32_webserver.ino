@@ -2,6 +2,7 @@
 #include <WebServer.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <SoftwareSerial.h>
 
 // WiFi credentials
 const char* ssid = "NHUNG1975";
@@ -13,7 +14,14 @@ const char* unlockPassword = "1234";
 // Create a web server on port 80
 WebServer server(80);
 
-// Function to handle root URL
+// Define SoftwareSerial pins for ESP32
+#define RX_PIN 16 // Connect GPIO 16 of ESP32 to D3 of Arduino Uno
+#define TX_PIN 17 // Connect GPIO 17 of ESP32 to D2 of Arduino Uno
+
+// Create SoftwareSerial object for ESP32 communication with Arduino Uno
+SoftwareSerial espSerial(RX_PIN, TX_PIN);
+
+// Function to handle root URL (handle html)
 void handleRoot() {
   File file = SPIFFS.open("/index.html", "r");
   if (!file) {
@@ -43,7 +51,7 @@ void handleUnlock() {
     String password = server.arg("password");
     if (password.equals(unlockPassword)) {
       // Send unlock command to Arduino
-      Serial.println("UNLOCK");
+      espSerial.println("UNLOCK");
       server.send(200, "text/plain", "Door unlocked successfully!");
     } else {
       server.send(401, "text/plain", "Incorrect password. Please try again.");
@@ -55,15 +63,15 @@ void handleUnlock() {
 
 // Function to check the connection with Arduino
 bool checkConnection() {
-  Serial.println("CHECK_CONNECTION");
-  unsigned long startTime = millis();
+  espSerial.println("CHECK_CONNECTION");
+  int startTime = millis();
   while (millis() - startTime < 2000) { // wait for 2 seconds
-    if (Serial.available()) {
-      String response = Serial.readStringUntil('\n');
+    if (espSerial.available()) {
+      String response = espSerial.readStringUntil('\n');
       response.trim();
       Serial.print("Response from Arduino: ");
       Serial.println(response);
-      if (response == "CONNECTION_OK") {
+      if (response == "CONNECTED SUCCESSFULY") {
         return true;
       }
     }
@@ -82,6 +90,9 @@ void setup() {
   }
   Serial.println("SPIFFS mounted successfully");
 
+  // Initialize SoftwareSerial
+  espSerial.begin(9600); // Set baud rate for SoftwareSerial
+  
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
