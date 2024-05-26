@@ -21,7 +21,7 @@ WebServer server(80);
 // Create SoftwareSerial object for ESP32 communication with Arduino Uno
 SoftwareSerial espSerial(RX_PIN, TX_PIN);
 
-// Function to handle root URL (handle html)
+// Function to handle root URL (serve index.html)
 void handleRoot() {
   File file = SPIFFS.open("/index.html", "r");
   if (!file) {
@@ -33,7 +33,7 @@ void handleRoot() {
   file.close();
 }
 
-// Function to handle CSS requests
+// Function to handle CSS requests (serve styles.css)
 void handleCSS() {
   File file = SPIFFS.open("/styles.css", "r");
   if (!file) {
@@ -71,7 +71,7 @@ bool checkConnection() {
       response.trim();
       Serial.print("Response from Arduino: ");
       Serial.println(response);
-      if (response == "CONNECTED SUCCESSFULY") {
+      if (response == "CONNECTED SUCCESSFULLY") {
         return true;
       }
     }
@@ -80,7 +80,7 @@ bool checkConnection() {
 }
 
 void setup() {
-  Serial.begin(115200); // Set baud rate to match with Arduino Uno
+  Serial.begin(115200); // Initialize serial communication at 115200 baud
   Serial.println("ESP32 starting...");
 
   // Initialize SPIFFS
@@ -124,5 +124,5 @@ void setup() {
 }
 
 void loop() {
-  server.handleClient();
+  server.handleClient(); // Handle client requests
 }
