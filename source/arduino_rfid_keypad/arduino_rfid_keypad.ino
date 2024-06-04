@@ -10,10 +10,9 @@
 #define SS_PIN 10
 #define RST_PIN 9
 #define SERVO_PIN 8
-#define OUTPUT_PIN 7
+#define OUTPUT_PIN 0
 #define RX_PIN 2
 #define TX_PIN 3
-#define CORRECT_PASSWORD "1234"
 
 Servo myservo;
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance.
@@ -21,19 +20,21 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // Set the LCD I2C address
 SoftwareSerial arduinoSerial(RX_PIN, TX_PIN); // SoftwareSerial for Arduino Uno to ESP32 communication
 
 const byte ROWS = 4;
-const byte COLS = 3;
+const byte COLS = 4;
 char keys[ROWS][COLS] = {
-  {'1', '2', '3'},
-  {'4', '5', '6'},
-  {'7', '8', '9'},
-  {'*', '0', '#'}
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
 };
 byte rowPins[ROWS] = {A0, A1, A2, A3};
-byte colPins[COLS] = {4, 5, 6};
+byte colPins[COLS] = {4, 5, 6, 7};
 Keypad keypad = Keypad(makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 
-enum Mode { NORMAL, ADD_CARD, REMOVE_CARD };
+enum Mode { NORMAL, ADD_CARD, REMOVE_CARD, CHANGE_PASSWORD };
 Mode currentMode = NORMAL;
+
+String correctPassword = "1234";
 
 void checkESP32Commands() {
   // Check for incoming commands from ESP32
@@ -51,14 +52,28 @@ void checkESP32Commands() {
 
 void checkPasswordEntry() {
   static String enteredPassword = "";
+  static String newPassword = "";
   char key = keypad.getKey();
 
   if (key) {
     if (key == '#') {
-      if (enteredPassword == CORRECT_PASSWORD) {
-        unlockDoor("Correct Password");
+      if (currentMode == CHANGE_PASSWORD) {
+        correctPassword = newPassword;
+        newPassword = "";
+        currentMode = NORMAL;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Password Changed");
+        delay(1000);
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Scan your card");
       } else {
-        denyAccess();
+        if (enteredPassword == correctPassword) {
+          unlockDoor("Correct Password");
+        } else {
+          denyAccess();
+        }
       }
       enteredPassword = ""; // Reset the entered password
     } else if (key == '*') {
@@ -83,12 +98,24 @@ void checkPasswordEntry() {
           lcd.print("Scan your card");
           break;
       }
-    } else {
-      enteredPassword += key;
+    } else if (key == 'A') {
+      currentMode = CHANGE_PASSWORD;
+      newPassword = "";
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("Password: ");
-      lcd.print(enteredPassword);
+      lcd.print("New Password:");
+    } else {
+      if (currentMode == CHANGE_PASSWORD) {
+        newPassword += key;
+        lcd.setCursor(0, 1);
+        lcd.print(newPassword);
+      } else {
+        enteredPassword += key;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Password: ");
+        lcd.print(enteredPassword);
+      }
     }
   }
 }
