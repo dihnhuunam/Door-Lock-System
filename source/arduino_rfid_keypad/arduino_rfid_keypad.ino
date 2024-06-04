@@ -76,7 +76,7 @@ void checkPasswordEntry() {
         }
       }
       enteredPassword = ""; // Reset the entered password
-    } else if (key == '*') {
+    } else if (key == 'A') {
       // Switch between modes
       switch (currentMode) {
         case NORMAL:
@@ -98,12 +98,43 @@ void checkPasswordEntry() {
           lcd.print("Scan your card");
           break;
       }
-    } else if (key == 'A') {
+    } else if (key == '*') {
       currentMode = CHANGE_PASSWORD;
       newPassword = "";
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("New Password:");
+    } else if (key == 'B') {
+      // Delete the last entered digit
+      if (currentMode == CHANGE_PASSWORD) {
+        if (newPassword.length() > 0) {
+          newPassword.remove(newPassword.length() - 1);
+          lcd.setCursor(0, 1);
+          lcd.print("                "); // Clear the previous display
+          lcd.setCursor(0, 1);
+          lcd.print(newPassword);
+        }
+      } else {
+        if (enteredPassword.length() > 0) {
+          enteredPassword.remove(enteredPassword.length() - 1);
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Password: ");
+          lcd.print(enteredPassword);
+        }
+      }
+    } else if (key == 'C') {
+      // Clear all entered digits
+      if (currentMode == CHANGE_PASSWORD) {
+        newPassword = "";
+        lcd.setCursor(0, 1);
+        lcd.print("                "); // Clear the previous display
+      } else {
+        enteredPassword = "";
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Password: ");
+      }
     } else {
       if (currentMode == CHANGE_PASSWORD) {
         newPassword += key;
