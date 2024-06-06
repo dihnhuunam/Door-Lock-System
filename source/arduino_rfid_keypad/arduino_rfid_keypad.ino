@@ -7,12 +7,12 @@
 #include <Keypad.h>
 #include <EEPROM.h>
 
-#define SS_PIN 10    //  Slave Select for SPI, dùng để chọn module RFID.
-#define RST_PIN 9    // Chân Reset cho module RFID.
-#define SERVO_PIN 8  // Chân kết nối với servo.
-#define OUTPUT_PIN 0 // Chân xuất tín hiệu kỹ thuật số.
-#define RX_PIN 2     // Chân RX cho giao tiếp serial phần mềm.
-#define TX_PIN 3     // Chân TX cho giao tiếp serial phần mềm.
+#define SS_PIN 10    // Slave Select for SPI, used to select the RFID module.
+#define RST_PIN 9    // Reset pin for the RFID module.
+#define SERVO_PIN 8  // Pin connected to the servo.
+#define OUTPUT_PIN 0 // Pin for digital output signal.
+#define RX_PIN 2     // RX pin for software serial communication.
+#define TX_PIN 3     // TX pin for software serial communication.
 
 Servo myservo;
 MFRC522 mfrc522(SS_PIN, RST_PIN);
@@ -40,29 +40,7 @@ enum Mode
 Mode currentMode = NORMAL;
 
 String correctPassword = "1234";
-void unlockDoor(String message)
-{
-  Serial.println("Authorized access");
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Access Granted");
-  lcd.setCursor(0, 1);
-  lcd.print(message);
 
-  digitalWrite(OUTPUT_PIN, HIGH); // Use pin for digital output
-  for (int pos = 0; pos <= 180; pos++)
-  {
-    myservo.write(pos);
-    delay(5);
-  }
-  delay(1000);
-  for (int pos = 180; pos >= 0; pos--)
-  {
-    myservo.write(pos);
-    delay(5);
-  }
-  digitalWrite(OUTPUT_PIN, LOW); // Use pin for digital output
-}
 void checkESP32Commands()
 {
   // Check for incoming commands from ESP32
@@ -255,6 +233,30 @@ void checkRFIDCard()
     }
   }
   currentMode = NORMAL;
+}
+
+void unlockDoor(String message)
+{
+  Serial.println("Authorized access");
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Access Granted");
+  lcd.setCursor(0, 1);
+  lcd.print(message);
+
+  digitalWrite(OUTPUT_PIN, HIGH); // Use pin for digital output
+  for (int pos = 0; pos <= 180; pos++)
+  {
+    myservo.write(pos);
+    delay(5);
+  }
+  delay(1000);
+  for (int pos = 180; pos >= 0; pos--)
+  {
+    myservo.write(pos);
+    delay(5);
+  }
+  digitalWrite(OUTPUT_PIN, LOW); // Use pin for digital output
 }
 
 void denyAccess()
