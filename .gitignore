@@ -6,3 +6,6 @@ source/Server/node_modules
 source/Unlock_App/.expo/
 source/Unlock_App/dist/
 source/Unlock_App/web-build/
+
+# .vscode
+source\.vscode
