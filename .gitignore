@@ -1,1 +1,8 @@
-source/Mobile_App/server/node_modules
+# dependencies
+source/Unlock_App/node_modules/
+source/Server/node_modules
+
+# Expo
+source/Unlock_App/.expo/
+source/Unlock_App/dist/
+source/Unlock_App/web-build/
