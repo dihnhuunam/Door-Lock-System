@@ -1,20 +1,20 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import UnlockScreen from './app/views/UnlockScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import UnlockScreen from './app/screens/UnlockScreen1';
+import ChangePasswordScreen from './app/screens/ChangePasswordScreen';
+
+const Stack = createStackNavigator();
 
 const App = () => {
   return (
-    <View style={styles.container}>
-      <UnlockScreen />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="UnlockScreen">
+        <Stack.Screen name="UnlockScreen" component={UnlockScreen} options={{ title: 'Unlock Door' }} />
+        <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-  },
-});
 
 export default App;
