@@ -1,0 +1,15 @@
+CREATE DATABASE IF NOT EXISTS door_password;
+
+-- Use the created database
+USE door_password;
+
+CREATE TABLE IF NOT EXISTS passwords (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    password VARCHAR(255) NOT NULL
+);
+
+INSERT INTO passwords (password) VALUES ('1234');
+INSERT INTO passwords (password) VALUES ('5678');
+INSERT INTO passwords (password) VALUES ('9012');
+INSERT INTO passwords (password) VALUES ('3456');
+INSERT INTO passwords (password) VALUES ('7890');
