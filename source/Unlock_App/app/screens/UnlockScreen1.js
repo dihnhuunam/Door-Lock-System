@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { handleUnlock } from '../controllers/unlockController';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { handleUnlock } from "../controllers/unlockController";
 
 const UnlockScreen = ({ navigation }) => {
-  const [password, setPassword] = useState('');
-  const [responseMessage, setResponseMessage] = useState('');
-  const [responseColor, setResponseColor] = useState('');
+  const [password, setPassword] = useState("");
+  const [responseMessage, setResponseMessage] = useState("");
+  const [responseColor, setResponseColor] = useState("");
 
   const unlock = () => {
     handleUnlock(password, setResponseMessage, setResponseColor);
@@ -25,11 +31,16 @@ const UnlockScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={unlock}>
         <Text style={styles.buttonText}>Unlock</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.changePasswordButton} onPress={() => navigation.navigate('ChangePasswordScreen')}>
+      <TouchableOpacity
+        style={styles.changePasswordButton}
+        onPress={() => navigation.navigate("ChangePasswordScreen")}
+      >
         <Text style={styles.changePasswordButtonText}>Change Password</Text>
       </TouchableOpacity>
       {responseMessage ? (
-        <Text style={[styles.response, { color: responseColor }]}>{responseMessage}</Text>
+        <Text style={[styles.response, { color: responseColor }]}>
+          {responseMessage}
+        </Text>
       ) : null}
     </View>
   );
@@ -38,36 +49,36 @@ const UnlockScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   title: {
     fontSize: 26,
     marginBottom: 30,
-    color: '#333333',
-    fontWeight: 'bold',
+    color: "#333333",
+    fontWeight: "bold",
   },
   input: {
-    width: '80%',
+    width: "80%",
     padding: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#DDDDDD',
+    borderColor: "#DDDDDD",
     borderRadius: 10,
     fontSize: 18,
-    backgroundColor: '#F8F9FA',
-    color: '#333333',
+    backgroundColor: "#F8F9FA",
+    color: "#333333",
   },
   button: {
-    width: '80%',
+    width: "80%",
     padding: 15,
     borderRadius: 10,
-    backgroundColor: '#007BFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: "#007BFF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -75,17 +86,17 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   changePasswordButton: {
-    width: '80%',
+    width: "80%",
     padding: 15,
     borderRadius: 10,
-    backgroundColor: '#6C757D',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: "#6C757D",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -93,13 +104,13 @@ const styles = StyleSheet.create({
   },
   changePasswordButtonText: {
     fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
   response: {
     marginTop: 20,
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 
