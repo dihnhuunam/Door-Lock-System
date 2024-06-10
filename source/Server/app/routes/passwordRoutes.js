@@ -1,8 +1,8 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const passwordController = require("../controllers/passwordController");
+const passwordController = require('../controllers/passwordController');
 
-// Post request to check password
-router.post('/check_password', passwordController.checkPassword)
+router.post('/checkPassword', passwordController.checkPassword);
+router.get('/getPasswords', passwordController.getPasswords);  // Corrected the path here
 
 module.exports = router;

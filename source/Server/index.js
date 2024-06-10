@@ -1,19 +1,20 @@
-require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
-const passwordRoutes = require("./app/routes/passwordRoutes.js");
+const passwordRoutes = require("./app/routes/passwordRoutes");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.use("/api", passwordRoutes);
-
 app.get("/", (req, res) => {
-  res.send("Demo Version");
+  res.send("WELCOME TO DOOR LOCK SYSTEM");
 });
+
+app.use("/api", passwordRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
