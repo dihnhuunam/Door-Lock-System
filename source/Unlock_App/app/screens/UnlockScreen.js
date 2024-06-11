@@ -6,25 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import Keypad from "../components/Keypad";
 import { handleUnlock } from "../controllers/unlockController";
 
 const UnlockScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [responseMessage, setResponseMessage] = useState("");
   const [responseColor, setResponseColor] = useState("");
-
-  const addDigit = (digit) => {
-    setPassword(password + digit);
-  };
-
-  const clearPassword = () => {
-    setPassword("");
-  };
-
-  const deleteLastDigit = () => {
-    setPassword(password.slice(0, -1));
-  };
 
   const unlock = () => {
     handleUnlock(password, setResponseMessage, setResponseColor);
@@ -34,18 +21,15 @@ const UnlockScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Unlock Door</Text>
       <TextInput
-        style={styles.passwordInput}
+        style={styles.input}
         value={password}
+        onChangeText={setPassword}
         secureTextEntry
-        editable={false}
+        placeholder="Enter Password"
+        keyboardType="numeric"
       />
-      <Keypad
-        addDigit={addDigit}
-        clearPassword={clearPassword}
-        deleteLastDigit={deleteLastDigit}
-      />
-      <TouchableOpacity style={styles.unlockButton} onPress={unlock}>
-        <Text style={styles.unlockButtonText}>Unlock</Text>
+      <TouchableOpacity style={styles.button} onPress={unlock}>
+        <Text style={styles.buttonText}>Unlock</Text>
       </TouchableOpacity>
       <TouchableOpacity
         style={styles.changePasswordButton}
@@ -76,7 +60,7 @@ const styles = StyleSheet.create({
     color: "#333333",
     fontWeight: "bold",
   },
-  passwordInput: {
+  input: {
     width: "80%",
     padding: 15,
     marginBottom: 20,
@@ -87,7 +71,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F8F9FA",
     color: "#333333",
   },
-  unlockButton: {
+  button: {
     width: "80%",
     padding: 15,
     borderRadius: 10,
@@ -100,7 +84,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     marginTop: 20,
   },
-  unlockButtonText: {
+  buttonText: {
     fontSize: 18,
     color: "#FFFFFF",
     fontWeight: "bold",
