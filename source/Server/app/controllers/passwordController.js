@@ -1,44 +1,43 @@
 const Password = require("../models/passwordModel");
-const axios = require("axios");
 
-function sendUnlockCommand(res) {
-  axios
-    .post(`http://${process.env.ESP32_IP_ADDRESS}/unlock`)
-    .then(() => {
-      res.send("Password is correct, door unlocked");
-    })
-    .catch((err) => {
-      console.error("Error when connecting to ESP32:", err);
-      res.status(500).send("Error when connecting to ESP32");
+const passwordController = {
+  unlock: (req, res) => {
+    const { password } = req.body;
+
+    Password.find((error, results) => {
+      if (error) {
+        return res.status(500).json({ error: "Internal server error" });
+      }
+
+      if (results.length === 0 || results[0].password !== password) {
+        return res.status(401).json({ error: "Invalid password" });
+      }
+
+      res.json({ message: "Unlocked successfully" });
     });
-}
+  },
 
-exports.unlock = (req, res) => {
-  const enteredPassword = req.body.password;
-  if (!enteredPassword) {
-    return res.status(400).send("Password is required");
-  }
+  changePassword: (req, res) => {
+    const { oldPassword, newPassword } = req.body;
 
-  Password.find(enteredPassword, (err, result) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).send("Database error: " + err);
-    }
+    Password.find((error, results) => {
+      if (error) {
+        return res.status(500).json({ error: "Internal server error" });
+      }
 
-    if (result.length > 0) {
-      sendUnlockCommand(res);
-    } else {
-      return res.status(401).send("Password is incorrect");
-    }
-  });
+      if (results.length === 0 || results[0].password !== oldPassword) {
+        return res.status(401).json({ error: "Invalid old password" });
+      }
+
+      Password.update(newPassword, (error, results) => {
+        if (error) {
+          return res.status(500).json({ error: "Internal server error" });
+        }
+
+        res.json({ message: "Password changed successfully" });
+      });
+    });
+  },
 };
 
-exports.getPasswords = (req, res) => {
-  Password.getAll((err, results) => {
-    if (err) {
-      console.error("Database error:", err);
-      return res.status(500).send("Database error: " + err);
-    }
-    res.json(results);
-  });
-};
+module.exports = passwordController;
