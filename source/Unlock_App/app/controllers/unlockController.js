@@ -27,11 +27,11 @@ export const handleUnlock = async (password, setResponseMessage, setResponseColo
   }
 };
 
-export const changePassword = async (currentPassword, newPassword, setResponseMessage, setResponseColor) => {
+export const changePassword = async (oldPassword, newPassword, setResponseMessage, setResponseColor) => {
   try {
     const response = await axios.post(
       `${baseUrl}/changePassword`,
-      { currentPassword, newPassword },
+      { oldPassword, newPassword },
       {
         headers: {
           "Content-Type": "application/json",

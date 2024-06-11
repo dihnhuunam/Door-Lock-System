@@ -9,13 +9,13 @@ import {
 import { changePassword } from "../controllers/unlockController";
 
 const ChangePasswordScreen = () => {
-  const [currentPassword, setCurrentPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [responseMessage, setResponseMessage] = useState("");
   const [responseColor, setResponseColor] = useState("");
 
   const handleChangePassword = async () => {
-    await changePassword(currentPassword, newPassword, setResponseMessage, setResponseColor);
+    await changePassword(oldPassword, newPassword, setResponseMessage, setResponseColor);
   };
 
   return (
@@ -23,10 +23,10 @@ const ChangePasswordScreen = () => {
       <Text style={styles.title}>Change Password</Text>
       <TextInput
         style={styles.input}
-        value={currentPassword}
-        onChangeText={setCurrentPassword}
+        value={oldPassword}
+        onChangeText={setOldPassword}
         secureTextEntry
-        placeholder="Current Password"
+        placeholder="Old Password"
         keyboardType="numeric"
       />
       <TextInput
