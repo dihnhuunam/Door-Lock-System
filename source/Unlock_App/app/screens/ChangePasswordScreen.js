@@ -15,12 +15,7 @@ const ChangePasswordScreen = () => {
   const [responseColor, setResponseColor] = useState("");
 
   const handleChangePassword = async () => {
-    const response = await changePassword(
-      currentPassword,
-      newPassword,
-      setResponseMessage,
-      setResponseColor
-    );
+    await changePassword(currentPassword, newPassword, setResponseMessage, setResponseColor);
   };
 
   return (

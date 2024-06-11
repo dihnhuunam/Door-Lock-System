@@ -31,12 +31,6 @@ const UnlockScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={unlock}>
         <Text style={styles.buttonText}>Unlock</Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.changePasswordButton}
-        onPress={() => navigation.navigate("ChangePasswordScreen")}
-      >
-        <Text style={styles.changePasswordButtonText}>Change Password</Text>
-      </TouchableOpacity>
       {responseMessage ? (
         <Text style={[styles.response, { color: responseColor }]}>
           {responseMessage}
@@ -85,24 +79,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   buttonText: {
-    fontSize: 18,
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  changePasswordButton: {
-    width: "80%",
-    padding: 15,
-    borderRadius: 10,
-    backgroundColor: "#6C757D",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    marginTop: 20,
-  },
-  changePasswordButtonText: {
     fontSize: 18,
     color: "#FFFFFF",
     fontWeight: "bold",

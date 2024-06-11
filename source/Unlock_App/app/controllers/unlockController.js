@@ -1,50 +1,53 @@
-import { unlockDoor, changeUserPassword } from "../models/unlockModel";
+import axios from "axios";
 
-export const handleUnlock = async (
-  password,
-  setResponseMessage,
-  setResponseColor
-) => {
+const baseUrl = "http://localhost:8000";
+
+export const handleUnlock = async (password, setResponseMessage, setResponseColor) => {
   try {
-    const status = await unlockDoor(password);
+    const response = await axios.post(
+      `${baseUrl}/unlock`,
+      { password },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    if (status === 200) {
-      setResponseMessage("Door unlocked successfully!");
+    if (response.status === 200) {
+      setResponseMessage("Password is correct, door unlocked");
       setResponseColor("green");
-    } else if (status === 401) {
-      setResponseMessage("Incorrect password. Please try again.");
-      setResponseColor("red");
     } else {
-      setResponseMessage("An error occurred. Please try again.");
+      setResponseMessage("Password is incorrect");
       setResponseColor("red");
     }
-  } catch {
-    setResponseMessage("An error occurred. Please try again.");
+  } catch (error) {
+    setResponseMessage("Network error or password is incorrect");
     setResponseColor("red");
   }
 };
 
-export const changePassword = async (
-  currentPassword,
-  newPassword,
-  setResponseMessage,
-  setResponseColor
-) => {
+export const changePassword = async (currentPassword, newPassword, setResponseMessage, setResponseColor) => {
   try {
-    const status = await changeUserPassword(currentPassword, newPassword);
+    const response = await axios.post(
+      `${baseUrl}/changePassword`,
+      { currentPassword, newPassword },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-    if (status === 200) {
-      setResponseMessage("Password changed successfully!");
+    if (response.status === 200) {
+      setResponseMessage("Password changed successfully");
       setResponseColor("green");
-    } else if (status === 401) {
-      setResponseMessage("Incorrect current password. Please try again.");
-      setResponseColor("red");
     } else {
-      setResponseMessage("An error occurred. Please try again.");
+      setResponseMessage("Failed to change password");
       setResponseColor("red");
     }
-  } catch {
-    setResponseMessage("An error occurred. Please try again.");
+  } catch (error) {
+    setResponseMessage("Network error or failed to change password");
     setResponseColor("red");
   }
 };

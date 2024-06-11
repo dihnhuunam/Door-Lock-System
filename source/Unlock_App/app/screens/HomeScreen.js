@@ -11,9 +11,6 @@ const HomeScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ChangePasswordScreen')}>
         <Text style={styles.buttonText}>Change Password</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AddPasswordScreen')}>
-        <Text style={styles.buttonText}>Add Password</Text>
-      </TouchableOpacity>
     </View>
   );
 };
