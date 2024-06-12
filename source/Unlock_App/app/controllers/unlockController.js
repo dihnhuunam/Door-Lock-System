@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const baseUrl = "http://localhost:8000";
+const baseUrl = "http://192.168.1.5:8000"; // thay ip thanh local cua mang dang connect toi
 
 export const handleUnlock = async (password, setResponseMessage, setResponseColor) => {
   try {
