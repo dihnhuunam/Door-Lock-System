@@ -1,8 +1,11 @@
 import axios from "axios";
+import baseUrl from "../config/config";
 
-const baseUrl = "http://192.168.1.5:8000"; // thay ip thanh local cua mang dang connect toi
-
-export const handleUnlock = async (password, setResponseMessage, setResponseColor) => {
+export const handleUnlock = async (
+  password,
+  setResponseMessage,
+  setResponseColor
+) => {
   try {
     const response = await axios.post(
       `${baseUrl}/unlock`,
@@ -27,7 +30,12 @@ export const handleUnlock = async (password, setResponseMessage, setResponseColo
   }
 };
 
-export const changePassword = async (oldPassword, newPassword, setResponseMessage, setResponseColor) => {
+export const changePassword = async (
+  oldPassword,
+  newPassword,
+  setResponseMessage,
+  setResponseColor
+) => {
   try {
     const response = await axios.post(
       `${baseUrl}/changePassword`,
