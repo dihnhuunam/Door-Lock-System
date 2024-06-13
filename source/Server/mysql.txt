@@ -9,7 +9,4 @@ CREATE TABLE IF NOT EXISTS passwords (
 );
 
 INSERT INTO passwords (password) VALUES ('1234');
-INSERT INTO passwords (password) VALUES ('5678');
-INSERT INTO passwords (password) VALUES ('9012');
-INSERT INTO passwords (password) VALUES ('3456');
-INSERT INTO passwords (password) VALUES ('7890');
+
