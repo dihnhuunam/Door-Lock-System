@@ -38,6 +38,16 @@ const passwordController = {
       });
     });
   },
+
+  getPassword: (req, res) => {
+    Password.get((err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Internal server error" });
+      }
+
+      res.json(results);
+    });
+  },
 };
 
 module.exports = passwordController;

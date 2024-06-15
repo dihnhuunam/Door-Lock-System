@@ -4,5 +4,6 @@ const passwordController = require("../controllers/passwordController");
 
 router.post("/unlock", passwordController.unlock);
 router.post("/changePassword", passwordController.changePassword);
+router.get("/getPassword", passwordController.getPassword);
 
 module.exports = router;
