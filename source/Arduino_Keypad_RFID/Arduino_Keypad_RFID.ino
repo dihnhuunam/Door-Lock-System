@@ -39,7 +39,7 @@ enum Mode
 };
 Mode currentMode = NORMAL;
 
-String correctPassword = "1234";
+String correctPassword = ""; // This will be fetched from the server
 
 void checkESP32Commands()
 {
@@ -56,6 +56,10 @@ void checkESP32Commands()
     else if (command == "CHECK_CONNECTION")
     {
       arduinoSerial.println("CONNECTED SUCCESSFULLY");
+    }
+    else if (command.startsWith("SET_PASSWORD:"))
+    {
+      correctPassword = command.substring(13); // Extract the password
     }
   }
 }
