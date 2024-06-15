@@ -85,6 +85,9 @@ void checkPasswordEntry()
       }
       else
       {
+        // Send the entered password to ESP32
+        arduinoSerial.println(enteredPassword);
+
         if (enteredPassword == correctPassword)
         {
           unlockDoor("Correct Password");

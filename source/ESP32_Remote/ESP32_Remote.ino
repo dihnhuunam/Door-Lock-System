@@ -1,59 +1,23 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <ArduinoJson.h> // Include ArduinoJson library
+#include <ArduinoJson.h>
+#include <HardwareSerial.h>
 
-// Replace with your network credentials
 const char* ssid = "NHUNG1975";
 const char* password = "0971947652";
 
-// Server IP Address and Port
 const char* serverIP = "192.168.1.5";
 const int serverPort = 8000;
 
-// Endpoint/Paths
 const char* endpointConnect = "/connect";
-const char* endpointGetPassword = "/getPassword"; // Example endpoint for GET request
+const char* endpointGetPassword = "/getPassword";
 
-// Construct the full server URLs
 String serverURLConnect = "http://" + String(serverIP) + ":" + String(serverPort) + endpointConnect;
 String serverURLGetPassword = "http://" + String(serverIP) + ":" + String(serverPort) + endpointGetPassword;
 
-// Global variable to store password
 String currentPassword;
 
-// Function prototypes
-void connectToWiFi();
-void sendPostRequest();
-void sendGetRequest();
-
-void setup() {
-  // Start the Serial Monitor
-  Serial.begin(115200);
-
-  // Connect to Wi-Fi
-  connectToWiFi();
-}
-
-void loop() {
-  // Check if connected to WiFi
-  if (WiFi.status() == WL_CONNECTED) {
-    // Example: Send POST request to server
-    sendPostRequest();
-    
-    // Example: Send GET request to server
-    sendGetRequest();
-  } else {
-    Serial.println("WiFi Disconnected. Reconnecting...");
-    // Attempt to reconnect to WiFi
-    connectToWiFi();
-  }
-
-  // Wait for 5 seconds
-  delay(5000);
-}
-
 void connectToWiFi() {
-  // Connect to Wi-Fi network
   Serial.print("Connecting to WiFi ..");
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -63,12 +27,32 @@ void connectToWiFi() {
   Serial.println("\nConnected to WiFi");
 }
 
+void setup() {
+  Serial.begin(115200);
+  connectToWiFi();
+  Serial2.begin(9600, SERIAL_8N1, 16, 17); // RX2 and TX2 are connected to pins 16 and 17
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    sendPostRequest();
+    sendGetRequest();
+  } else {
+    Serial.println("WiFi Disconnected. Reconnecting...");
+    connectToWiFi();
+  }
+
+  receivePassword();
+  
+  delay(5000);
+}
+
 void sendPostRequest() {
   HTTPClient http;
-  http.begin(serverURLConnect); // Use the constructed server URL for POST
+  http.begin(serverURLConnect);
   http.addHeader("Content-Type", "application/json");
 
-  int httpResponseCode = http.POST("{}"); // Send empty JSON payload
+  int httpResponseCode = http.POST("{}");
   if (httpResponseCode > 0) {
     String response = http.getString();
     Serial.println("POST Response:");
@@ -83,7 +67,7 @@ void sendPostRequest() {
 
 void sendGetRequest() {
   HTTPClient http;
-  http.begin(serverURLGetPassword); // Use the constructed server URL for GET
+  http.begin(serverURLGetPassword);
 
   int httpResponseCode = http.GET();
   if (httpResponseCode > 0) {
@@ -92,14 +76,12 @@ void sendGetRequest() {
     Serial.println(httpResponseCode);
     Serial.println(response);
 
-    // Parse JSON response
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, response);
     if (!error && doc.size() > 0) {
-      // Extract password from JSON and store in global variable
-      storedPassword = doc[0]["password"].as<String>();
-      Serial.print("Stored Password: ");
-      Serial.println(storedPassword);
+      currentPassword = doc[0]["password"].as<String>();
+      Serial.print("Current Password: ");
+      Serial.println(currentPassword);
     } else {
       Serial.print("Failed to parse JSON or empty response");
     }
@@ -108,4 +90,13 @@ void sendGetRequest() {
     Serial.println(httpResponseCode);
   }
   http.end();
+}
+
+void receivePassword() {
+  if (Serial2.available()) {
+    String receivedPassword = Serial2.readStringUntil('\n');
+    receivedPassword.trim();
+    Serial.print("Received Password from Arduino: ");
+    Serial.println(receivedPassword);
+  }
 }
