@@ -6,14 +6,16 @@
 const char* ssid = "NHUNG1975";
 const char* password = "0971947652";
 
-const char* serverIP = "192.168.1.5";
+const char* serverIP = "192.168.1.4";
 const int serverPort = 8000;
 
 const char* endpointConnect = "/connect";
 const char* endpointGetPassword = "/getPassword";
+const char* endpointChangePassword = "/changePassword";  // New endpoint for changing password
 
 String serverURLConnect = "http://" + String(serverIP) + ":" + String(serverPort) + endpointConnect;
 String serverURLGetPassword = "http://" + String(serverIP) + ":" + String(serverPort) + endpointGetPassword;
+String serverURLChangePassword = "http://" + String(serverIP) + ":" + String(serverPort) + endpointChangePassword;
 
 String currentPassword;
 String enteredPassword = "";
@@ -25,7 +27,41 @@ String enteredPassword = "";
 // SoftwareSerial object for ESP32 to communicate with Arduino Uno
 SoftwareSerial espSerial(RX_PIN, TX_PIN);  // RX2 and TX2 are connected to pins 16 and 17
 
-// Check connection with Arduino Uno
+bool checkArduinoConnection();
+void connectToWiFi();
+void sendPostRequest();
+void sendGetRequest();
+void sendPasswordChangeRequest(String oldPassword, String newPassword);
+void receivePassword();
+void unlockDoor();
+
+void setup() {
+  Serial.begin(115200); // Initialize Serial for debugging
+  espSerial.begin(9600); // Initialize SoftwareSerial communication with Arduino
+  connectToWiFi(); // Connect to WiFi
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    sendPostRequest();
+    sendGetRequest();
+  } else {
+    Serial.println("WiFi Disconnected. Reconnecting...");
+    connectToWiFi();
+  }
+
+  if (!checkArduinoConnection()) {
+    Serial.println("Arduino Disconnected. Attempting to reconnect...");
+    // Implement reconnection logic if needed
+  } else {
+    Serial.println("Arduino is connected.");
+  }
+
+  receivePassword();
+  delay(5000); // Wait for 5 seconds before next iteration
+}
+
+// Function to check connection with Arduino Uno
 bool checkArduinoConnection() {
   espSerial.println("CHECK_CONNECTION");
   int startTime = millis();
@@ -43,6 +79,7 @@ bool checkArduinoConnection() {
   return false;
 }
 
+// Function to connect to WiFi
 void connectToWiFi() {
   Serial.print("Connecting to WiFi ..");
   WiFi.begin(ssid, password);
@@ -53,6 +90,7 @@ void connectToWiFi() {
   Serial.println("\nConnected to WiFi");
 }
 
+// Function to send a POST request
 void sendPostRequest() {
   HTTPClient http;
   http.begin(serverURLConnect);
@@ -71,6 +109,7 @@ void sendPostRequest() {
   http.end();
 }
 
+// Function to send a GET request
 void sendGetRequest() {
   HTTPClient http;
   http.begin(serverURLGetPassword);
@@ -100,56 +139,88 @@ void sendGetRequest() {
   http.end();
 }
 
+// Function to send a password change request
+void sendPasswordChangeRequest(String oldPassword, String newPassword) {
+  Serial.print("Old Password from Arduino: ");
+  Serial.println(oldPassword);
+  Serial.print("Current Password stored: ");
+  Serial.println(currentPassword);
+
+  if (oldPassword != currentPassword) {
+    Serial.println("Entered old password does not match the current password.");
+    espSerial.println("INCORRECT_OLD_PASSWORD");
+    return;
+  }
+
+  HTTPClient http;
+  http.begin(serverURLChangePassword);
+  http.addHeader("Content-Type", "application/json");
+
+  StaticJsonDocument<200> doc;
+  doc["oldPassword"] = oldPassword;
+  doc["newPassword"] = newPassword;
+
+  String requestBody;
+  serializeJson(doc, requestBody);
+
+  int httpResponseCode = http.POST(requestBody);
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+    Serial.println("Password Change Response:");
+    Serial.println(httpResponseCode);
+    Serial.println(response);
+
+    StaticJsonDocument<200> responseDoc;
+    DeserializationError error = deserializeJson(responseDoc, response);
+    if (!error && responseDoc["success"] == true) {
+      currentPassword = newPassword;  // Update the current password
+      espSerial.println("SET_PASSWORD:" + newPassword);  // Update the Arduino
+      Serial.println("Password changed successfully");
+    } else {
+      Serial.println("Password change failed");
+      espSerial.println("PASSWORD_CHANGE_FAILED");
+    }
+  } else {
+    Serial.print("Error on sending POST: ");
+    Serial.println(httpResponseCode);
+  }
+  http.end();
+}
+
+// Function to receive data from Arduino
 void receivePassword() {
   while (espSerial.available()) {
-    char key = espSerial.read();
-    if (key == '\n') {
-      // Process the entered password
-      Serial.print("Entered Password: ");
-      Serial.println(enteredPassword);
+    String receivedData = espSerial.readStringUntil('\n');
+    receivedData.trim();
+    Serial.println("Received from Arduino: " + receivedData);
 
-      if (enteredPassword == currentPassword) {
-        unlockDoor();
-      } else {
-        Serial.println("Incorrect Password");
-        espSerial.println("INCORRECT_PASSWORD");
-      }
+    if (receivedData.startsWith("CHANGE_PASSWORD:")) {
+      int firstColonIndex = receivedData.indexOf(':');
+      int secondColonIndex = receivedData.indexOf(':', firstColonIndex + 1);
 
-      enteredPassword = ""; // Reset the entered password
+      String oldPassword = receivedData.substring(firstColonIndex + 1, secondColonIndex);
+      String newPassword = receivedData.substring(secondColonIndex + 1);
+
+      sendPasswordChangeRequest(oldPassword, newPassword);
     } else {
-      enteredPassword += key; // Add the key to the entered password
+      enteredPassword += receivedData;
+      if (receivedData.endsWith("\n")) {
+        enteredPassword.trim();
+        if (enteredPassword == currentPassword) {
+          unlockDoor();
+        } else {
+          Serial.println("Incorrect Password");
+          espSerial.println("INCORRECT_PASSWORD");
+        }
+        enteredPassword = "";
+      }
     }
   }
 }
 
+// Function to unlock the door
 void unlockDoor() {
   // Send command to Arduino to unlock the door
   espSerial.println("UNLOCK");
   Serial.println("Unlocking door...");
-}
-
-void setup() {
-  Serial.begin(115200); // Initialize Serial for debugging
-  espSerial.begin(9600); // Initialize SoftwareSerial communication with Arduino
-  connectToWiFi(); // Connect to WiFi
-}
-
-void loop() {
-  if (WiFi.status() == WL_CONNECTED) {
-    sendPostRequest();
-    sendGetRequest();
-  } else {
-    Serial.println("WiFi Disconnected. Reconnecting...");
-    connectToWiFi();
-  }
-
-  if (!checkArduinoConnection()) {
-    Serial.println("Arduino Disconnected. Attempting to reconnect...");
-    // Implement reconnection logic if needed
-  } else {
-    Serial.println("Arduino is connected.");
-  }
-
-  receivePassword();
-  delay(5000); // Wait for 5 seconds before next iteration
 }
