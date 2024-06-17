@@ -41,6 +41,42 @@ Mode currentMode = NORMAL;
 
 String correctPassword = ""; // This will be fetched from the server
 
+// Function declarations
+void checkESP32Commands();
+void checkPasswordEntry();
+void checkRFIDCard();
+void unlockDoor(String message);
+void denyAccess();
+String getCardUID();
+bool isCardAuthorized(String cardUID);
+void addCard(String cardUID);
+void removeCard(String cardUID);
+
+void setup()
+{
+  SPI.begin();
+  mfrc522.PCD_Init();
+  myservo.attach(SERVO_PIN);
+  lcd.init();
+  lcd.backlight();
+  Serial.begin(115200);
+  arduinoSerial.begin(9600); // Initialize SoftwareSerial communication with ESP32
+  lcd.setCursor(0, 0);
+  lcd.print("Scan your card");
+  delay(1000);
+  pinMode(OUTPUT_PIN, OUTPUT); // Set the OUTPUT_PIN as an output
+  digitalWrite(OUTPUT_PIN, LOW); // Ensure the output is initially off
+}
+
+void loop()
+{
+  checkESP32Commands();
+  checkPasswordEntry();
+  checkRFIDCard();
+}
+
+// Function implementations
+
 void checkESP32Commands()
 {
   // Check for incoming commands from ESP32
@@ -67,6 +103,7 @@ void checkESP32Commands()
 void checkPasswordEntry()
 {
   static String enteredPassword = "";
+  static String oldPassword = "";
   static String newPassword = "";
   char key = keypad.getKey();
 
@@ -76,16 +113,45 @@ void checkPasswordEntry()
     {
       if (currentMode == CHANGE_PASSWORD)
       {
-        correctPassword = newPassword;
-        newPassword = "";
-        currentMode = NORMAL;
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Password Changed");
-        delay(1000);
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Scan your card");
+        if (enteredPassword == correctPassword)
+        {
+          oldPassword = enteredPassword;
+          enteredPassword = "";
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("New Password:");
+          while (newPassword.length() < 4)
+          {
+            key = keypad.getKey();
+            if (key)
+            {
+              newPassword += key;
+              lcd.setCursor(0, 1);
+              lcd.print(newPassword);
+            }
+          }
+          // Send the change password request to ESP32
+          arduinoSerial.println("CHANGE_PASSWORD:" + oldPassword + ":" + newPassword);
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Password Changed");
+          delay(1000);
+          currentMode = NORMAL;
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Enter Password:");
+        }
+        else
+        {
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Wrong Password");
+          delay(1000);
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Old Password:");
+          enteredPassword = "";
+        }
       }
       else
       {
@@ -124,17 +190,16 @@ void checkPasswordEntry()
         currentMode = NORMAL;
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("Scan your card");
+        lcd.print("Enter Password:");
         break;
       }
     }
     else if (key == '*')
     {
       currentMode = CHANGE_PASSWORD;
-      newPassword = "";
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("New Password:");
+      lcd.print("Old Password:");
     }
     else if (key == 'B')
     {
@@ -178,6 +243,16 @@ void checkPasswordEntry()
         lcd.setCursor(0, 0);
         lcd.print("Password: ");
       }
+    }
+    else if (key == 'D')
+    {
+      // Return to password entry screen
+      currentMode = NORMAL;
+      enteredPassword = "";
+      newPassword = "";
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Enter Password:");
     }
     else
     {
@@ -294,10 +369,7 @@ bool isCardAuthorized(String cardUID)
     String storedCard = "";
     for (int j = 0; j < 8; j++)
     {
-      char c = EEPROM.read(i + j);
-      if (c == 0)
-        break;
-      storedCard += c;
+      storedCard += char(EEPROM.read(i + j));
     }
     if (storedCard == cardUID)
     {
@@ -309,104 +381,66 @@ bool isCardAuthorized(String cardUID)
 
 void addCard(String cardUID)
 {
-  if (isCardAuthorized(cardUID))
+  for (int i = 0; i < EEPROM.length(); i += 8)
   {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Card already");
-    lcd.setCursor(0, 1);
-    lcd.print("authorized");
-  }
-  else
-  {
-    for (int i = 0; i < EEPROM.length(); i += 8)
+    String storedCard = "";
+    for (int j = 0; j < 8; j++)
     {
-      if (EEPROM.read(i) == 0)
-      {
-        for (int j = 0; j < cardUID.length() && j < 8; j++)
-        {
-          EEPROM.write(i + j, cardUID[j]);
-        }
-        EEPROM.write(i + cardUID.length(), 0); // Null-terminate the string
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Card Added");
-        Serial.print("Card added: ");
-        Serial.println(cardUID);
-        return;
-      }
+      storedCard += char(EEPROM.read(i + j));
     }
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Memory Full");
+    if (storedCard == cardUID)
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Card Already Added");
+      delay(1000);
+      return;
+    }
+    if (storedCard == "")
+    {
+      for (int j = 0; j < 8; j++)
+      {
+        EEPROM.write(i + j, cardUID[j]);
+      }
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Card Added");
+      delay(1000);
+      return;
+    }
   }
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Memory Full");
+  delay(1000);
 }
 
 void removeCard(String cardUID)
 {
-  if (!isCardAuthorized(cardUID))
+  for (int i = 0; i < EEPROM.length(); i += 8)
   {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Card not found");
-    Serial.print("Card not found: ");
-    Serial.println(cardUID);
-  }
-  else
-  {
-    for (int i = 0; i < EEPROM.length(); i += 8)
+    String storedCard = "";
+    for (int j = 0; j < 8; j++)
     {
-      String storedCard = "";
+      storedCard += char(EEPROM.read(i + j));
+    }
+    if (storedCard == cardUID)
+    {
       for (int j = 0; j < 8; j++)
       {
-        char c = EEPROM.read(i + j);
-        if (c == 0)
-          break;
-        storedCard += c;
+        EEPROM.write(i + j, 0);
       }
-      if (storedCard == cardUID)
-      {
-        for (int j = 0; j < 8; j++)
-        {
-          EEPROM.write(i + j, 0);
-        }
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Card Removed");
-        Serial.print("Card removed: ");
-        Serial.println(cardUID);
-        return;
-      }
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Card Removed");
+      delay(1000);
+      return;
     }
   }
-}
-
-void setup()
-{
-  Serial.begin(115200); // Initiate serial communication
-  SPI.begin();          // Initiate SPI bus
-  mfrc522.PCD_Init();   // Initiate MFRC522
-
-  pinMode(OUTPUT_PIN, OUTPUT); // Set pin for digital output
-  myservo.attach(SERVO_PIN);   // Attach servo to pin
-  lcd.init();                  // Initialize the LCD
-  lcd.backlight();             // Turn on the LCD backlight
+  lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Scan your card");
-
-  arduinoSerial.begin(9600); // Initialize SoftwareSerial
-  delay(1000);               // Allow time for initialization
-
-  // Debug: Clear EEPROM for testing purposes
-  // Uncomment this to reset the EEPROM if necessary
-  // for (int i = 0; i < EEPROM.length(); i++) {
-  //   EEPROM.write(i, 0);
-  // }
+  lcd.print("Card Not Found");
+  delay(1000);
 }
 
-void loop()
-{
-  checkESP32Commands();
-  checkPasswordEntry();
-  checkRFIDCard();
-}
+
