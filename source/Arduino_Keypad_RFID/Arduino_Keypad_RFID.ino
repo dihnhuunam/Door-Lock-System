@@ -66,6 +66,9 @@ void setup()
   delay(1000);
   pinMode(OUTPUT_PIN, OUTPUT); // Set the OUTPUT_PIN as an output
   digitalWrite(OUTPUT_PIN, LOW); // Ensure the output is initially off
+
+  // Check connection with ESP32
+  arduinoSerial.println("CHECK_CONNECTION");
 }
 
 void loop()
@@ -89,13 +92,35 @@ void checkESP32Commands()
     {
       unlockDoor("Remote Unlock");
     }
-    else if (command == "CHECK_CONNECTION")
+    else if (command == "CONNECTED SUCCESSFULLY")
     {
-      arduinoSerial.println("CONNECTED SUCCESSFULLY");
+      Serial.println("ESP32 Connected");
     }
     else if (command.startsWith("SET_PASSWORD:"))
     {
       correctPassword = command.substring(13); // Extract the password
+      Serial.print("New Password Set: ");
+      Serial.println(correctPassword);
+    }
+    else if (command == "INCORRECT_OLD_PASSWORD")
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Incorrect Old Pw");
+      delay(2000);
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Old Password:");
+    }
+    else if (command == "PASSWORD_CHANGE_FAILED")
+    {
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Change Failed");
+      delay(2000);
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Old Password:");
     }
   }
 }
@@ -134,7 +159,7 @@ void checkPasswordEntry()
           arduinoSerial.println("CHANGE_PASSWORD:" + oldPassword + ":" + newPassword);
           lcd.clear();
           lcd.setCursor(0, 0);
-          lcd.print("Password Changed");
+          lcd.print("Changing...");
           delay(1000);
           currentMode = NORMAL;
           lcd.clear();
@@ -291,8 +316,7 @@ void checkRFIDCard()
   lcd.print(content);
 
   // Send UID to ESP32
-  Serial.print("UID: ");
-  Serial.println(content);
+  arduinoSerial.println("UID:" + content);
 
   if (currentMode == ADD_CARD)
   {
@@ -420,7 +444,7 @@ void removeCard(String cardUID)
   for (int i = 0; i < EEPROM.length(); i += 8)
   {
     String storedCard = "";
-    for (int j = 0; j < 8; j++)
+    for (int j = 0; j < 8, j++)
     {
       storedCard += char(EEPROM.read(i + j));
     }
@@ -442,5 +466,3 @@ void removeCard(String cardUID)
   lcd.print("Card Not Found");
   delay(1000);
 }
-
-
