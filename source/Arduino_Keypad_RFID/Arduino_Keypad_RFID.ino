@@ -444,7 +444,7 @@ void removeCard(String cardUID)
   for (int i = 0; i < EEPROM.length(); i += 8)
   {
     String storedCard = "";
-    for (int j = 0; j < 8, j++)
+    for (int j = 0; j < 8; j++)
     {
       storedCard += char(EEPROM.read(i + j));
     }
