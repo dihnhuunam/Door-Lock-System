@@ -1,5 +1,7 @@
 const Password = require("../models/passwordModel");
 
+let doorStatus = "closed";
+
 const passwordController = {
   unlock: (req, res) => {
     const { password } = req.body;
@@ -13,6 +15,7 @@ const passwordController = {
         return res.status(401).json({ error: "Invalid password" });
       }
 
+      doorStatus = "open"; // Set door status to open
       res.json({ message: "Unlocked successfully" });
     });
   },
@@ -48,6 +51,13 @@ const passwordController = {
       res.json(results);
     });
   },
+
+  checkDoorStatus: (req, res) => {
+    res.json({ status: doorStatus });
+    if (doorStatus === "open") {
+      doorStatus = "closed"; // Reset door status after sending the status
+    }
+  }
 };
 
 module.exports = passwordController;
