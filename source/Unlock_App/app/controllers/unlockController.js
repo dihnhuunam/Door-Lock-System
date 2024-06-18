@@ -9,12 +9,7 @@ export const handleUnlock = async (
   try {
     const response = await axios.post(
       `${baseUrl}/unlock`,
-      { password },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      { password }
     );
 
     if (response.status === 200) {
@@ -39,12 +34,7 @@ export const changePassword = async (
   try {
     const response = await axios.post(
       `${baseUrl}/changePassword`,
-      { oldPassword, newPassword },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      { oldPassword, newPassword }
     );
 
     if (response.status === 200) {
