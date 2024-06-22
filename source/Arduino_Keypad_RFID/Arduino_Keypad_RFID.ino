@@ -35,11 +35,13 @@ enum Mode
   NORMAL,
   ADD_CARD,
   REMOVE_CARD,
-  CHANGE_PASSWORD
+  CHANGE_PASSWORD,
+  VERIFY_PASSWORD
 };
 Mode currentMode = NORMAL;
 
 String correctPassword = ""; // This will be fetched from the server
+bool passwordVerified = false; // Track if the password has been verified
 
 // Function declarations
 void checkESP32Commands();
@@ -51,6 +53,7 @@ String getCardUID();
 bool isCardAuthorized(String cardUID);
 void addCard(String cardUID);
 void removeCard(String cardUID);
+void verifyPassword();
 
 void setup()
 {
@@ -130,41 +133,39 @@ void checkPasswordEntry()
   static String enteredPassword = "";
   static String oldPassword = "";
   static String newPassword = "";
+  static bool awaitingNewPassword = false;
   char key = keypad.getKey();
 
   if (key)
   {
     if (key == '#')
     {
-      if (currentMode == CHANGE_PASSWORD)
+      if (currentMode == CHANGE_PASSWORD && awaitingNewPassword)
+      {
+        newPassword = enteredPassword;
+        enteredPassword = "";
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Changing Pw...");
+        // Send the change password request to ESP32
+        arduinoSerial.println("CHANGE_PASSWORD:" + oldPassword + ":" + newPassword);
+        delay(1000);
+        currentMode = NORMAL;
+        awaitingNewPassword = false;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Enter Password:");
+      }
+      else if (currentMode == CHANGE_PASSWORD && !awaitingNewPassword)
       {
         if (enteredPassword == correctPassword)
         {
           oldPassword = enteredPassword;
           enteredPassword = "";
+          awaitingNewPassword = true;
           lcd.clear();
           lcd.setCursor(0, 0);
           lcd.print("New Password:");
-          while (newPassword.length() < 4)
-          {
-            key = keypad.getKey();
-            if (key)
-            {
-              newPassword += key;
-              lcd.setCursor(0, 1);
-              lcd.print(newPassword);
-            }
-          }
-          // Send the change password request to ESP32
-          arduinoSerial.println("CHANGE_PASSWORD:" + oldPassword + ":" + newPassword);
-          lcd.clear();
-          lcd.setCursor(0, 0);
-          lcd.print("Changing...");
-          delay(1000);
-          currentMode = NORMAL;
-          lcd.clear();
-          lcd.setCursor(0, 0);
-          lcd.print("Enter Password:");
         }
         else
         {
@@ -177,6 +178,32 @@ void checkPasswordEntry()
           lcd.print("Old Password:");
           enteredPassword = "";
         }
+      }
+      else if (currentMode == VERIFY_PASSWORD)
+      {
+        if (enteredPassword == correctPassword)
+        {
+          passwordVerified = true;
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Verified");
+          delay(1000);
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Mode: Add-Remove");
+          currentMode = NORMAL; // Reset mode to normal after verification
+        }
+        else
+        {
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Wrong Password");
+          delay(1000);
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Enter Password:");
+        }
+        enteredPassword = "";
       }
       else
       {
@@ -196,27 +223,37 @@ void checkPasswordEntry()
     }
     else if (key == 'A')
     {
-      // Switch between modes
-      switch (currentMode)
+      if (passwordVerified)
       {
-      case NORMAL:
-        currentMode = ADD_CARD;
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Add Card Mode");
-        break;
-      case ADD_CARD:
-        currentMode = REMOVE_CARD;
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Remove Card Mode");
-        break;
-      case REMOVE_CARD:
-        currentMode = NORMAL;
+        // Switch between modes
+        switch (currentMode)
+        {
+        case NORMAL:
+          currentMode = ADD_CARD;
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Add Card Mode");
+          break;
+        case ADD_CARD:
+          currentMode = REMOVE_CARD;
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Remove Card Mode");
+          break;
+        case REMOVE_CARD:
+          currentMode = NORMAL;
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Mode: Add/Remove");
+          break;
+        }
+      }
+      else
+      {
+        currentMode = VERIFY_PASSWORD;
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("Enter Password:");
-        break;
       }
     }
     else if (key == '*')
@@ -229,45 +266,54 @@ void checkPasswordEntry()
     else if (key == 'B')
     {
       // Delete the last entered digit
-      if (currentMode == CHANGE_PASSWORD)
+      if (enteredPassword.length() > 0)
       {
-        if (newPassword.length() > 0)
+        enteredPassword.remove(enteredPassword.length() - 1);
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        if (currentMode == CHANGE_PASSWORD && awaitingNewPassword)
         {
-          newPassword.remove(newPassword.length() - 1);
-          lcd.setCursor(0, 1);
-          lcd.print("                "); // Clear the previous display
-          lcd.setCursor(0, 1);
-          lcd.print(newPassword);
+          lcd.print("New Password:");
         }
-      }
-      else
-      {
-        if (enteredPassword.length() > 0)
+        else if (currentMode == CHANGE_PASSWORD)
         {
-          enteredPassword.remove(enteredPassword.length() - 1);
-          lcd.clear();
-          lcd.setCursor(0, 0);
-          lcd.print("Password: ");
-          lcd.print(enteredPassword);
+          lcd.print("Old Password:");
         }
+        else if (currentMode == VERIFY_PASSWORD)
+        {
+          lcd.print("Enter Password:");
+        }
+        else
+        {
+          lcd.print("Password:");
+        }
+        lcd.setCursor(0, 1); // Display password on second line
+        lcd.print(enteredPassword);
       }
     }
     else if (key == 'C')
     {
       // Clear all entered digits
-      if (currentMode == CHANGE_PASSWORD)
+      enteredPassword = "";
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      if (currentMode == CHANGE_PASSWORD && awaitingNewPassword)
       {
-        newPassword = "";
-        lcd.setCursor(0, 1);
-        lcd.print("                "); // Clear the previous display
+        lcd.print("New Password:");
+      }
+      else if (currentMode == CHANGE_PASSWORD)
+      {
+        lcd.print("Old Password:");
+      }
+      else if (currentMode == VERIFY_PASSWORD)
+      {
+        lcd.print("Enter Password:");
       }
       else
       {
-        enteredPassword = "";
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Password: ");
+        lcd.print("Password:");
       }
+      lcd.setCursor(0, 1); // Display password on second line
     }
     else if (key == 'D')
     {
@@ -275,26 +321,34 @@ void checkPasswordEntry()
       currentMode = NORMAL;
       enteredPassword = "";
       newPassword = "";
+      awaitingNewPassword = false;
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Enter Password:");
     }
     else
     {
-      if (currentMode == CHANGE_PASSWORD)
+      enteredPassword += key;
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      if (currentMode == CHANGE_PASSWORD && awaitingNewPassword)
       {
-        newPassword += key;
-        lcd.setCursor(0, 1);
-        lcd.print(newPassword);
+        lcd.print("New Password:");
+      }
+      else if (currentMode == CHANGE_PASSWORD)
+      {
+        lcd.print("Old Password:");
+      }
+      else if (currentMode == VERIFY_PASSWORD)
+      {
+        lcd.print("Enter Password:");
       }
       else
       {
-        enteredPassword += key;
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Password: ");
-        lcd.print(enteredPassword);
+        lcd.print("Password:");
       }
+      lcd.setCursor(0, 1); // Display password on second line
+      lcd.print(enteredPassword);
     }
   }
 }

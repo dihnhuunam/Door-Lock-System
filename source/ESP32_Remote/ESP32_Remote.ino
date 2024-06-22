@@ -6,7 +6,7 @@
 const char* ssid = "NHUNG1975";
 const char* password = "0971947652";
 
-const char* serverIP = "192.168.1.4";
+const char* serverIP = "192.168.1.2";
 const int serverPort = 8000;
 
 const char* endpointConnect = "/connect";
@@ -48,7 +48,7 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     sendPostRequest();
     sendGetRequest();
-    checkDoorStatus();  // Kiểm tra trạng thái cửa mỗi lần lặp
+    checkDoorStatus();  
   } else {
     Serial.println("WiFi Disconnected. Reconnecting...");
     connectToWiFi();
@@ -68,7 +68,7 @@ void loop() {
 bool checkArduinoConnection() {
   espSerial.println("CHECK_CONNECTION");
   int startTime = millis();
-  while (millis() - startTime < 2000) { // Wait for 2 seconds
+  while (millis() - startTime < 5000) { // Increase wait time to 5 seconds
     if (espSerial.available()) {
       String response = espSerial.readStringUntil('\n');
       response.trim();
