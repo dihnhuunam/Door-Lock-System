@@ -6,13 +6,13 @@
 const char* ssid = "NHUNG1975";
 const char* password = "0971947652";
 
-const char* serverIP = "192.168.1.2";
+const char* serverIP = "192.168.1.3";
 const int serverPort = 8000;
 
 const char* endpointConnect = "/connect";
 const char* endpointGetPassword = "/getPassword";
 const char* endpointChangePassword = "/changePassword";
-const char* endpointCheckDoorStatus = "/doorStatus";  // Endpoint mới để kiểm tra trạng thái cửa
+const char* endpointCheckDoorStatus = "/doorStatus";  // New endpoint to check door status
 
 String serverURLConnect = "http://" + String(serverIP) + ":" + String(serverPort) + endpointConnect;
 String serverURLGetPassword = "http://" + String(serverIP) + ":" + String(serverPort) + endpointGetPassword;
@@ -27,16 +27,15 @@ String enteredPassword = "";
 #define TX_PIN 17 // Connect GPIO 17 of ESP32 to D2 of Arduino Uno
 
 // Connect ESP32 to Arduino Uno
-SoftwareSerial espSerial(RX_PIN, TX_PIN);  
+SoftwareSerial espSerial(RX_PIN, TX_PIN);
 
-bool checkArduinoConnection();
 void connectToWiFi();
 void sendPostRequest();
 void sendGetRequest();
 void sendPasswordChangeRequest(String oldPassword, String newPassword);
 void receivePassword();
 void unlockDoor();
-void checkDoorStatus();  // Function mới để kiểm tra trạng thái cửa
+void checkDoorStatus();
 
 void setup() {
   Serial.begin(115200);
@@ -48,38 +47,15 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) {
     sendPostRequest();
     sendGetRequest();
-    checkDoorStatus();  
+    checkDoorStatus();
   } else {
     Serial.println("WiFi Disconnected. Reconnecting...");
     connectToWiFi();
   }
 
-  if (!checkArduinoConnection()) {
-    Serial.println("Arduino Disconnected. Attempting to reconnect...");
-  } else {
-    Serial.println("Arduino is connected.");
-  }
-
   receivePassword();
   delay(5000);
-}
-
-// Check connection with Arduino Uno
-bool checkArduinoConnection() {
-  espSerial.println("CHECK_CONNECTION");
-  int startTime = millis();
-  while (millis() - startTime < 5000) { // Increase wait time to 5 seconds
-    if (espSerial.available()) {
-      String response = espSerial.readStringUntil('\n');
-      response.trim();
-      Serial.print("Response from Arduino: ");
-      Serial.println(response);
-      if (response == "CONNECTED SUCCESSFULLY") {
-        return true;
-      }
-    }
-  }
-  return false;
+  Serial.println("-----------------------------------------------------");
 }
 
 // Connect to WiFi
@@ -102,8 +78,9 @@ void sendPostRequest() {
   int httpResponseCode = http.POST("{}");
   if (httpResponseCode > 0) {
     String response = http.getString();
-    Serial.println("POST Response:");
-    Serial.println(httpResponseCode);
+    Serial.print("POST Response: ");
+    Serial.print(httpResponseCode);
+    Serial.print(": ");
     Serial.println(response);
   } else {
     Serial.print("Error on sending POST: ");
@@ -120,8 +97,9 @@ void sendGetRequest() {
   int httpResponseCode = http.GET();
   if (httpResponseCode > 0) {
     String response = http.getString();
-    Serial.println("GET Response:");
-    Serial.println(httpResponseCode);
+    Serial.print("GET Response: ");
+    Serial.print(httpResponseCode);
+    Serial.print(": ");
     Serial.println(response);
 
     StaticJsonDocument<200> doc;
@@ -133,7 +111,7 @@ void sendGetRequest() {
       // Send the password to Arduino
       espSerial.println("SET_PASSWORD:" + currentPassword);
     } else {
-      Serial.print("Failed to parse JSON or empty response");
+      Serial.println("Failed to parse JSON or empty response");
     }
   } else {
     Serial.print("Error on sending GET: ");
@@ -165,12 +143,15 @@ void sendPasswordChangeRequest(String oldPassword, String newPassword) {
 
   String requestBody;
   serializeJson(doc, requestBody);
+  Serial.print("Request Body: ");
+  Serial.println(requestBody);  // Debug request body
 
   int httpResponseCode = http.POST(requestBody);
   if (httpResponseCode > 0) {
     String response = http.getString();
-    Serial.println("Password Change Response:");
-    Serial.println(httpResponseCode);
+    Serial.print("Password Change Response: ");
+    Serial.print(httpResponseCode);
+    Serial.print(": ");
     Serial.println(response);
 
     StaticJsonDocument<200> responseDoc;
@@ -195,7 +176,8 @@ void receivePassword() {
   while (espSerial.available()) {
     String receivedData = espSerial.readStringUntil('\n');
     receivedData.trim();
-    Serial.println("Received from Arduino: " + receivedData);
+    Serial.print("Received from Arduino: ");
+    Serial.println(receivedData);
 
     if (receivedData.startsWith("CHANGE_PASSWORD:")) {
       int firstColonIndex = receivedData.indexOf(':');
@@ -228,7 +210,7 @@ void unlockDoor() {
   Serial.println("Unlocking door...");
 }
 
-// Function mới để kiểm tra trạng thái cửa từ server
+// New function to check the door status from server
 void checkDoorStatus() {
   HTTPClient http;
   http.begin(serverURLCheckDoorStatus);
@@ -236,8 +218,9 @@ void checkDoorStatus() {
   int httpResponseCode = http.GET();
   if (httpResponseCode > 0) {
     String response = http.getString();
-    Serial.println("Check Door Status Response:");
-    Serial.println(httpResponseCode);
+    Serial.print("Check Door Status Response: ");
+    Serial.print(httpResponseCode);
+    Serial.print(": ");
     Serial.println(response);
 
     StaticJsonDocument<200> doc;

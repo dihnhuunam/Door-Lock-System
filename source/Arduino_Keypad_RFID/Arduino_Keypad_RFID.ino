@@ -43,7 +43,6 @@ Mode currentMode = NORMAL;
 String correctPassword = ""; // This will be fetched from the server
 bool passwordVerified = false; // Track if the password has been verified
 
-// Function declarations
 void checkESP32Commands();
 void checkPasswordEntry();
 void checkRFIDCard();
