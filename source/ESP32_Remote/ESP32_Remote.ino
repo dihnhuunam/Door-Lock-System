@@ -55,7 +55,7 @@ void loop() {
 
   receivePassword();
   delay(5000);
-  Serial.println("-----------------------------------------------------");
+  Serial.println("---------------------------------------------");
 }
 
 // Connect to WiFi
@@ -156,13 +156,23 @@ void sendPasswordChangeRequest(String oldPassword, String newPassword) {
 
     StaticJsonDocument<200> responseDoc;
     DeserializationError error = deserializeJson(responseDoc, response);
-    if (!error && responseDoc["success"] == true) {
-      currentPassword = newPassword;  // Update the current password
-      espSerial.println("SET_PASSWORD:" + newPassword);  // Update the Arduino
-      Serial.println("Password changed successfully");
+    if (!error) {
+      Serial.print("Parsed JSON: ");
+      serializeJson(responseDoc, Serial);  // Print the entire parsed JSON document
+      Serial.println();
+      const char* message = responseDoc["message"];
+      if (message && strcmp(message, "Password changed successfully") == 0) {
+        currentPassword = newPassword;  // Update the current password
+        espSerial.println("SET_PASSWORD:" + newPassword);  // Update the Arduino
+        Serial.println("Password changed successfully");
+      } else {
+        Serial.println("Password change failed");
+        espSerial.println("PASSWORD_CHANGE_FAILED");
+      }
     } else {
-      Serial.println("Password change failed");
-      espSerial.println("PASSWORD_CHANGE_FAILED");
+      Serial.print("Failed to parse JSON response: ");
+      Serial.println(error.c_str());
+      Serial.println(response);  // Print the raw response for debugging
     }
   } else {
     Serial.print("Error on sending POST: ");
