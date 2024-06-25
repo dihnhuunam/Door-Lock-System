@@ -5,6 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  StatusBar,
+  SafeAreaView,
 } from "react-native";
 import { handleUnlock } from "../controllers/unlockController";
 
@@ -18,35 +20,41 @@ const UnlockScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Unlock Door</Text>
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        placeholder="Enter Password"
-        keyboardType="numeric"
-      />
-      <TouchableOpacity style={styles.button} onPress={unlock}>
-        <Text style={styles.buttonText}>Unlock</Text>
-      </TouchableOpacity>
-      {responseMessage ? (
-        <Text style={[styles.response, { color: responseColor }]}>
-          {responseMessage}
-        </Text>
-      ) : null}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <View style={styles.container}>
+        <Text style={styles.title}>Unlock Door</Text>
+        <TextInput
+          style={styles.input}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          placeholder="Enter Password"
+          keyboardType="numeric"
+        />
+        <TouchableOpacity style={styles.button} onPress={unlock}>
+          <Text style={styles.buttonText}>Unlock</Text>
+        </TouchableOpacity>
+        {responseMessage ? (
+          <Text style={[styles.response, { color: responseColor }]}>
+            {responseMessage}
+          </Text>
+        ) : null}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#FFFFFF",
   },
   title: {
     fontSize: 26,

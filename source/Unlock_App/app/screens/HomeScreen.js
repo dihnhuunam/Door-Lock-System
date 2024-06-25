@@ -1,42 +1,62 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+} from "react-native";
 
 const HomeScreen = ({ navigation }) => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home</Text>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('UnlockScreen')}>
-        <Text style={styles.buttonText}>Unlock</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('ChangePasswordScreen')}>
-        <Text style={styles.buttonText}>Change Password</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <View style={styles.container}>
+        <Text style={styles.title}>Home</Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("UnlockScreen")}
+        >
+          <Text style={styles.buttonText}>Unlock</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => navigation.navigate("ChangePasswordScreen")}
+        >
+          <Text style={styles.buttonText}>Change Password</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   title: {
     fontSize: 26,
     marginBottom: 30,
-    color: '#333333',
-    fontWeight: 'bold',
+    color: "#333333",
+    fontWeight: "bold",
   },
   button: {
-    width: '80%',
+    width: "80%",
     padding: 15,
     borderRadius: 10,
-    backgroundColor: '#007BFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
+    backgroundColor: "#007BFF",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -44,8 +64,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
   },
 });
 

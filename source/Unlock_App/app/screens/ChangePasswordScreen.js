@@ -5,6 +5,8 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { changePassword } from "../controllers/unlockController";
 
@@ -15,41 +17,53 @@ const ChangePasswordScreen = () => {
   const [responseColor, setResponseColor] = useState("");
 
   const handleChangePassword = async () => {
-    await changePassword(oldPassword, newPassword, setResponseMessage, setResponseColor);
+    await changePassword(
+      oldPassword,
+      newPassword,
+      setResponseMessage,
+      setResponseColor
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Change Password</Text>
-      <TextInput
-        style={styles.input}
-        value={oldPassword}
-        onChangeText={setOldPassword}
-        secureTextEntry
-        placeholder="Old Password"
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        value={newPassword}
-        onChangeText={setNewPassword}
-        secureTextEntry
-        placeholder="New Password"
-        keyboardType="numeric"
-      />
-      <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
-        <Text style={styles.buttonText}>Change Password</Text>
-      </TouchableOpacity>
-      {responseMessage ? (
-        <Text style={[styles.response, { color: responseColor }]}>
-          {responseMessage}
-        </Text>
-      ) : null}
-    </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <View style={styles.container}>
+        <Text style={styles.title}>Change Password</Text>
+        <TextInput
+          style={styles.input}
+          value={oldPassword}
+          onChangeText={setOldPassword}
+          secureTextEntry
+          placeholder="Old Password"
+          keyboardType="numeric"
+        />
+        <TextInput
+          style={styles.input}
+          value={newPassword}
+          onChangeText={setNewPassword}
+          secureTextEntry
+          placeholder="New Password"
+          keyboardType="numeric"
+        />
+        <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
+          <Text style={styles.buttonText}>Change Password</Text>
+        </TouchableOpacity>
+        {responseMessage ? (
+          <Text style={[styles.response, { color: responseColor }]}>
+            {responseMessage}
+          </Text>
+        ) : null}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   container: {
     flex: 1,
     justifyContent: "center",
