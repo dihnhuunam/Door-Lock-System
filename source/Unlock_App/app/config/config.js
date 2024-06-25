@@ -5,7 +5,7 @@ let config;
 if (Platform.OS === 'android' || Platform.OS === 'ios') {
   config = {
     PROTOCOL: 'http',
-    IP: '192.168.1.4',
+    IP: '192.168.1.3',
     PORT: '8000',
   };
 } else {

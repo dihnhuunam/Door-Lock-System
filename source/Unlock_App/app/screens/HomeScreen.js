@@ -6,28 +6,32 @@ import {
   StyleSheet,
   SafeAreaView,
   StatusBar,
+  TouchableWithoutFeedback,
+  Keyboard
 } from "react-native";
 
 const HomeScreen = ({ navigation }) => {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      <View style={styles.container}>
-        <Text style={styles.title}>Home</Text>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("UnlockScreen")}
-        >
-          <Text style={styles.buttonText}>Unlock</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate("ChangePasswordScreen")}
-        >
-          <Text style={styles.buttonText}>Change Password</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+        <View style={styles.container}>
+          <Text style={styles.title}>Home</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate("UnlockScreen")}
+          >
+            <Text style={styles.buttonText}>Unlock</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => navigation.navigate("ChangePasswordScreen")}
+          >
+            <Text style={styles.buttonText}>Change Password</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
