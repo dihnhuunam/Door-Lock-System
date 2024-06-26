@@ -11,8 +11,8 @@
 #define RST_PIN 9    // Reset pin for the RFID module.
 #define SERVO_PIN 8  // Pin connected to the servo.
 #define OUTPUT_PIN 0 // Pin for digital output signal.
-#define RX_PIN 2     // RX pin for software serial communication.
-#define TX_PIN 3     // TX pin for software serial communication.
+#define RX_PIN 2     // RX pin for SoftwareSerial communication.
+#define TX_PIN 3     // TX pin for SoftwareSerial communication.
 
 Servo myservo;
 MFRC522 mfrc522(SS_PIN, RST_PIN);
@@ -40,8 +40,8 @@ enum Mode
 };
 Mode currentMode = NORMAL;
 
-String correctPassword = ""; // This will be fetched from the server
-bool passwordVerified = false; // Track if the password has been verified
+String correctPassword = ""; // Password received from ESP32
+bool passwordVerified = false; // Verify the Password
 
 void checkESP32Commands();
 void checkPasswordEntry();
@@ -59,48 +59,38 @@ void setup()
   SPI.begin();
   mfrc522.PCD_Init();
   myservo.attach(SERVO_PIN);
+  arduinoSerial.begin(9600); // SoftwareSerial communication with ESP32
+  arduinoSerial.println("CHECK_CONNECTION"); // Check connection with ESP32
   lcd.init();
   lcd.backlight();
   Serial.begin(115200);
-  arduinoSerial.begin(9600); // Initialize SoftwareSerial communication with ESP32
   lcd.setCursor(0, 0);
   lcd.print("Scan your card");
   delay(1000);
-  pinMode(OUTPUT_PIN, OUTPUT); // Set the OUTPUT_PIN as an output
-  digitalWrite(OUTPUT_PIN, LOW); // Ensure the output is initially off
-
-  // Check connection with ESP32
-  arduinoSerial.println("CHECK_CONNECTION");
+  pinMode(OUTPUT_PIN, OUTPUT); // Set output at OUTPUT_PIN
+  digitalWrite(OUTPUT_PIN, LOW); // Initially, OUTPUT_PIN is off
 }
 
-void loop()
-{
-  checkESP32Commands();
-  checkPasswordEntry();
-  checkRFIDCard();
+void loop() {
+    checkESP32Commands();
+    checkPasswordEntry();
+    checkRFIDCard();
 }
 
-// Function implementations
-
+// Check commands received from ESP32
 void checkESP32Commands()
 {
-  // Check for incoming commands from ESP32
   if (arduinoSerial.available())
   {
     String command = arduinoSerial.readStringUntil('\n');
     command.trim();
-
     if (command == "UNLOCK")
     {
       unlockDoor("Remote Unlock");
     }
-    else if (command == "CONNECTED SUCCESSFULLY")
-    {
-      Serial.println("ESP32 Connected");
-    }
     else if (command.startsWith("SET_PASSWORD:"))
     {
-      correctPassword = command.substring(13); // Extract the password
+      correctPassword = command.substring(13); 
       Serial.print("New Password Set: ");
       Serial.println(correctPassword);
     }
@@ -108,7 +98,7 @@ void checkESP32Commands()
     {
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("Incorrect Old Pw");
+      lcd.print("WRONG OLD PASSWORD");
       delay(2000);
       lcd.clear();
       lcd.setCursor(0, 0);
@@ -127,6 +117,7 @@ void checkESP32Commands()
   }
 }
 
+// Check entered password
 void checkPasswordEntry()
 {
   static String enteredPassword = "";
@@ -145,11 +136,10 @@ void checkPasswordEntry()
         enteredPassword = "";
         lcd.clear();
         lcd.setCursor(0, 0);
-        lcd.print("Changing Pw...");
-        // Send the change password request to ESP32
-        arduinoSerial.println("CHANGE_PASSWORD:" + oldPassword + ":" + newPassword);
+        lcd.print("Password Changed");
+        arduinoSerial.println("CHANGE_PASSWORD:" + oldPassword + ":" + newPassword); // Send the change password request to ESP32
         delay(1000);
-        currentMode = NORMAL;
+        currentMode = NORMAL; // Reset mode to normal
         awaitingNewPassword = false;
         lcd.clear();
         lcd.setCursor(0, 0);
@@ -206,9 +196,7 @@ void checkPasswordEntry()
       }
       else
       {
-        // Send the entered password to ESP32
-        arduinoSerial.println(enteredPassword);
-
+        arduinoSerial.println(enteredPassword); // Send the entered password to ESP32
         if (enteredPassword == correctPassword)
         {
           unlockDoor("Correct Password");
@@ -220,11 +208,11 @@ void checkPasswordEntry()
       }
       enteredPassword = ""; // Reset the entered password
     }
+
     else if (key == 'A')
     {
       if (passwordVerified)
       {
-        // Switch between modes
         switch (currentMode)
         {
         case NORMAL:
@@ -255,6 +243,7 @@ void checkPasswordEntry()
         lcd.print("Enter Password:");
       }
     }
+
     else if (key == '*')
     {
       currentMode = CHANGE_PASSWORD;
@@ -262,9 +251,10 @@ void checkPasswordEntry()
       lcd.setCursor(0, 0);
       lcd.print("Old Password:");
     }
+
+    // Delete the last entered digit
     else if (key == 'B')
     {
-      // Delete the last entered digit
       if (enteredPassword.length() > 0)
       {
         enteredPassword.remove(enteredPassword.length() - 1);
@@ -290,6 +280,7 @@ void checkPasswordEntry()
         lcd.print(enteredPassword);
       }
     }
+
     else if (key == 'C')
     {
       // Clear all entered digits
@@ -314,6 +305,7 @@ void checkPasswordEntry()
       }
       lcd.setCursor(0, 1); // Display password on second line
     }
+
     else if (key == 'D')
     {
       // Return to password entry screen
@@ -325,6 +317,7 @@ void checkPasswordEntry()
       lcd.setCursor(0, 0);
       lcd.print("Enter Password:");
     }
+
     else
     {
       enteredPassword += key;
@@ -352,6 +345,7 @@ void checkPasswordEntry()
   }
 }
 
+// CHeck RFID Card
 void checkRFIDCard()
 {
   // Look for new cards
@@ -375,13 +369,15 @@ void checkRFIDCard()
   {
     addCard(content);
   }
+
   else if (currentMode == REMOVE_CARD)
   {
     removeCard(content);
   }
+
+  // Check if the card is authorized
   else
   {
-    // Check if the card is authorized
     if (isCardAuthorized(content))
     {
       unlockDoor(content);
@@ -427,6 +423,7 @@ void denyAccess()
   delay(1000);
 }
 
+// Get UID of RFID Card
 String getCardUID()
 {
   String content = "";
@@ -439,6 +436,7 @@ String getCardUID()
   return content;
 }
 
+// Authorize RFID Card
 bool isCardAuthorized(String cardUID)
 {
   for (int i = 0; i < EEPROM.length(); i += 8)
@@ -456,6 +454,7 @@ bool isCardAuthorized(String cardUID)
   return false;
 }
 
+// Add Card
 void addCard(String cardUID)
 {
   for (int i = 0; i < EEPROM.length(); i += 8)
@@ -492,6 +491,7 @@ void addCard(String cardUID)
   delay(1000);
 }
 
+// Remove Card
 void removeCard(String cardUID)
 {
   for (int i = 0; i < EEPROM.length(); i += 8)
