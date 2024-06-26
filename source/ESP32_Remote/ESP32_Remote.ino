@@ -37,6 +37,7 @@ void sendPasswordChangeRequest(String oldPassword, String newPassword);
 void receivePassword();
 void unlockDoor();
 void checkDoorStatus();
+void checkSoftwareSerialConnection();
 
 void setup() {
   Serial.begin(115200);
@@ -58,6 +59,18 @@ void loop() {
   receivePassword();
   delay(5000);
   Serial.println("------------------------------------------------------");
+}
+
+// Check SoftwareSerial Connection
+void checkSoftwareSerialConnection() {
+  if (espSerial.available()) {
+    String receivedData = espSerial.readStringUntil('\n');
+    receivedData.trim();
+
+    if (receivedData == "CHECK_CONNECTION") {
+      espSerial.println("CONNECTION_OK"); // Send response to Arduino
+    }
+  }
 }
 
 // Connect to WiFi
