@@ -6,13 +6,14 @@
 const char* ssid = "NHUNG1975";
 const char* password = "0971947652";
 
-const char* serverIP = "192.168.1.3";
+const char* serverIP = "192.168.1.3";  // IP of Server running on Local 
 const int serverPort = 8000;
 
+// Routes
 const char* endpointConnect = "/connect";
 const char* endpointGetPassword = "/getPassword";
 const char* endpointChangePassword = "/changePassword";
-const char* endpointCheckDoorStatus = "/doorStatus";  // New endpoint to check door status
+const char* endpointCheckDoorStatus = "/doorStatus";
 
 String serverURLConnect = "http://" + String(serverIP) + ":" + String(serverPort) + endpointConnect;
 String serverURLGetPassword = "http://" + String(serverIP) + ":" + String(serverPort) + endpointGetPassword;
@@ -23,10 +24,10 @@ String currentPassword;
 String enteredPassword = "";
 
 // Define SoftwareSerial pins for ESP32
-#define RX_PIN 16 // Connect GPIO 16 of ESP32 to D3 of Arduino Uno
-#define TX_PIN 17 // Connect GPIO 17 of ESP32 to D2 of Arduino Uno
+#define RX_PIN 16  // Connect GPIO 16 of ESP32 to D3 of Arduino Uno
+#define TX_PIN 17  // Connect GPIO 17 of ESP32 to D2 of Arduino Uno
 
-// Connect ESP32 to Arduino Uno
+// Connect ESP32 to Arduino Uno by SoftwareSerial
 SoftwareSerial espSerial(RX_PIN, TX_PIN);
 
 void connectToWiFi();
@@ -39,11 +40,12 @@ void checkDoorStatus();
 
 void setup() {
   Serial.begin(115200);
-  espSerial.begin(9600); // SoftwareSerial communication with Arduino
-  connectToWiFi(); 
+  espSerial.begin(9600);  // SoftwareSerial communication with Arduino
+  connectToWiFi();
 }
 
 void loop() {
+  // Connect to WiFi
   if (WiFi.status() == WL_CONNECTED) {
     sendPostRequest();
     sendGetRequest();
@@ -55,7 +57,7 @@ void loop() {
 
   receivePassword();
   delay(5000);
-  Serial.println("---------------------------------------------");
+  Serial.println("------------------------------------------------------");
 }
 
 // Connect to WiFi
@@ -69,7 +71,7 @@ void connectToWiFi() {
   Serial.println("\nConnected to WiFi");
 }
 
-// Send a POST request
+// Send a POST request to check connection to Server 
 void sendPostRequest() {
   HTTPClient http;
   http.begin(serverURLConnect);
@@ -79,8 +81,8 @@ void sendPostRequest() {
   if (httpResponseCode > 0) {
     String response = http.getString();
     Serial.print("POST Response: ");
-    Serial.print(httpResponseCode);
-    Serial.print(": ");
+    Serial.println(httpResponseCode);
+    Serial.print("Response from Server: ");
     Serial.println(response);
   } else {
     Serial.print("Error on sending POST: ");
@@ -89,7 +91,7 @@ void sendPostRequest() {
   http.end();
 }
 
-// Send a GET request
+// Send a GET request to get password
 void sendGetRequest() {
   HTTPClient http;
   http.begin(serverURLGetPassword);
@@ -98,8 +100,8 @@ void sendGetRequest() {
   if (httpResponseCode > 0) {
     String response = http.getString();
     Serial.print("GET Response: ");
-    Serial.print(httpResponseCode);
-    Serial.print(": ");
+    Serial.println(httpResponseCode);
+    Serial.print("Response from Server: ");
     Serial.println(response);
 
     StaticJsonDocument<200> doc;
@@ -120,7 +122,7 @@ void sendGetRequest() {
   http.end();
 }
 
-// Send a password change request
+// Send a POST request to change password
 void sendPasswordChangeRequest(String oldPassword, String newPassword) {
   Serial.print("Old Password from Arduino: ");
   Serial.println(oldPassword);
@@ -144,26 +146,23 @@ void sendPasswordChangeRequest(String oldPassword, String newPassword) {
   String requestBody;
   serializeJson(doc, requestBody);
   Serial.print("Request Body: ");
-  Serial.println(requestBody);  // Debug request body
+  Serial.println(requestBody);  
 
   int httpResponseCode = http.POST(requestBody);
   if (httpResponseCode > 0) {
     String response = http.getString();
     Serial.print("Password Change Response: ");
-    Serial.print(httpResponseCode);
-    Serial.print(": ");
+    Serial.println(httpResponseCode);
+    Serial.print("Reponse from Server: ");
     Serial.println(response);
 
     StaticJsonDocument<200> responseDoc;
     DeserializationError error = deserializeJson(responseDoc, response);
     if (!error) {
-      Serial.print("Parsed JSON: ");
-      serializeJson(responseDoc, Serial);  // Print the entire parsed JSON document
-      Serial.println();
       const char* message = responseDoc["message"];
       if (message && strcmp(message, "Password changed successfully") == 0) {
-        currentPassword = newPassword;  // Update the current password
-        espSerial.println("SET_PASSWORD:" + newPassword);  // Update the Arduino
+        currentPassword = newPassword;                     
+        espSerial.println("SET_PASSWORD:" + newPassword);  
         Serial.println("Password changed successfully");
       } else {
         Serial.println("Password change failed");
@@ -172,7 +171,7 @@ void sendPasswordChangeRequest(String oldPassword, String newPassword) {
     } else {
       Serial.print("Failed to parse JSON response: ");
       Serial.println(error.c_str());
-      Serial.println(response);  // Print the raw response for debugging
+      Serial.println(response);  
     }
   } else {
     Serial.print("Error on sending POST: ");
@@ -213,14 +212,13 @@ void receivePassword() {
   }
 }
 
-// Function to unlock the door
+// Unlock the door
 void unlockDoor() {
-  // Send command to Arduino to unlock the door
-  espSerial.println("UNLOCK");
+  espSerial.println("UNLOCK"); // Send command to Arduino to unlock the door
   Serial.println("Unlocking door...");
 }
 
-// New function to check the door status from server
+// Check the door status from server
 void checkDoorStatus() {
   HTTPClient http;
   http.begin(serverURLCheckDoorStatus);
@@ -229,8 +227,8 @@ void checkDoorStatus() {
   if (httpResponseCode > 0) {
     String response = http.getString();
     Serial.print("Check Door Status Response: ");
-    Serial.print(httpResponseCode);
-    Serial.print(": ");
+    Serial.println(httpResponseCode);
+    Serial.print("Response from Server: ");
     Serial.println(response);
 
     StaticJsonDocument<200> doc;
